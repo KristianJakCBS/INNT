@@ -4,7 +4,7 @@ import { TextInput, Button } from 'react-native-paper';
 import { SelectList } from 'react-native-dropdown-select-list';
 import { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { getDatabase, ref, child, push, update } from "firebase/database"; 
+import { getDatabase, ref, push } from "firebase/database"; 
 
 export default function SignUpComponent() {
     const [name, setName] = useState('');

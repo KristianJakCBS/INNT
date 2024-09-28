@@ -20,7 +20,7 @@ export default function LogInComponent() {
             .catch((error) => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                setErrorMessage(errorMessage);
+                setErrorMessage(errorCode, errorMessage);
             });
     };
 
