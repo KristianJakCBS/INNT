@@ -1,13 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { getAuth, signOut } from "firebase/auth";
+import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import { Button } from 'react-native-paper';
 import { useState, useEffect } from 'react';
 import { getDatabase, ref, get } from "firebase/database"; 
+import RengøringsMedarbejderScreen from "./RengøringsMedarbejder"
+import KontrollørScreen from "./Kontrollør"
+import IndkøbsansvarligScreen from './Indkøbsansvarlig';
+import AdminScreen from './AdminScreen';
 
 export default function MainScreen() {
-    const auth = getAuth();
-    
+    const [userData, setUserData] = useState(null);
+    const [user, setUser] = useState(null);
+    let auth = getAuth();
 
     const handleLogOut = async () => {
         try {
@@ -19,57 +24,61 @@ export default function MainScreen() {
         }
     };
 
-    const [userData, setUserData] = useState(null);
-    const [user, setUser] = useState(null);
-
-    
     useEffect(() => {
-        setUser(auth.currentUser);
-        const fetchUserData = async () => {
-            try {
+        auth = getAuth()
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                setUser(user);
                 const db = getDatabase();
                 const usersRef = ref(db, "Users");
                 const snapshot = await get(usersRef);
                 if (snapshot.exists()) {
                     const usersData = snapshot.val();
-                    const userData = Object.values(usersData).find(user => user.email === user.email);
-                    if (userData) {
-                        setUserData(userData);
+                    const foundUser = Object.values(usersData).find(u => u.email === user.email);
+                    if (foundUser) {
+                        setUserData(foundUser);
                     } else {
-                        console.log("No user found with the given email.");
+                        Alert.alert("No user found with the given mail")
+                        handleLogOut()
                     }
                 } else {
                     console.log("No data available.");
                 }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
             }
+        });
+
+        return () => unsubscribe();
+    }, [auth]);
+
+    if (user && userData) {
+        console.log(user);
+        
+        if (userData.userType === 'Kontrollør') {
+            return (
+                <KontrollørScreen params={{ user, userData, handleLogOut }} />
+            );
+        } else if (userData.userType === 'Rengøringsmedarbejder') {
+            return (
+                <RengøringsMedarbejderScreen params={{ user, userData, handleLogOut }} />
+            );
+        } else if (userData.userType === 'Indkøbsansvarlig') {
+            return (
+                <IndkøbsansvarligScreen params={{ user, userData, handleLogOut }} />
+            );
+        } else if (userData.userType === 'Admin') {
+            return (
+                <AdminScreen params = {{ user, userData, handleLogOut }}/>
+            );
+        } else {
+            return (
+                <View style={styles.overlay}>
+                    <Text style={styles.header}>Unknown user type</Text>
+                    <Button onPress={handleLogOut}> Log ud</Button>
+                </View>
+            );
         };
-
-        fetchUserData();
-    }, []);
-
-    if (user && userData) {        
-        return (
-            <View style={styles.overlay}>
-                <View style={styles.headerContainer}>
-                    <Text style={styles.header}>🦺</Text>
-                    <Text style={styles.header}>Velkommen til Washmate, {user.displayName}!</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                    <Text style={styles.infoText}>Navn: {user.displayName}</Text>
-                    <Text style={styles.infoText}>Email: {user.email}</Text>
-                    <Text style={styles.infoText}>Du er medarbejdertype: {userData.userType}</Text>
-                </View>
-                <View style={styles.buttonContainer}>
-                    <Button mode="contained" onPress={handleLogOut} style={styles.logOutButton}>
-                        Log out
-                    </Button>
-                </View>
-            </View>
-        )
-    }
-}
+    };
+};
 
 const styles = StyleSheet.create({
     background: {

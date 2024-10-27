@@ -17,25 +17,30 @@ export default function SignUpComponent() {
 
     const userTypes = [
         {key: '1', value: 'Rengøringsmedarbejder'},
-        {key: '2', value: 'Kontrollør'}
+        {key: '2', value: 'Kontrollør'},
+        {key: '3', value: 'Indkøbsansvarlig'},
+        {key: '4', value: 'Admin'}
     ]
 
     const db = getDatabase();
     const initialState = {
         email: '',
-        userType: ''
+        userType: '',
+        displayName: ''
     };
 
     const [userTypeData, setUserTypeData] = useState(initialState);
 
     const handleSubmit = async () => {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const lowerCaseEmail = email.toLowerCase();
+        await createUserWithEmailAndPassword(auth, lowerCaseEmail, password)
             .then((userCredential) => {
                 const user = userCredential.user;
                 const usersRef = ref(db, "/Users/");
                 const userTypeData = {
-                    email,
-                    userType
+                    email: lowerCaseEmail,
+                    userType,
+                    displayName: name
                 };
 
                 return push(usersRef, userTypeData)
@@ -92,6 +97,7 @@ export default function SignUpComponent() {
                     placeholder='Select user type'
                     dropdownStyles={styles.dropdown}
                     search={false} 
+                    animation={{ duration: 10 }}
                 />
             </View>
             {errorMessage && (

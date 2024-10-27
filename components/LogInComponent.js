@@ -15,7 +15,7 @@ export default function LogInComponent() {
         await signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
-                console.log("user logged in")
+                console.log("user logged in:", user.displayName, user.email)
             })
             .catch((error) => {
                 const errorCode = error.code;
@@ -38,6 +38,7 @@ export default function LogInComponent() {
                 placeholder="password"
                 value={password}
                 onChangeText={setPassword}
+                secureTextEntry={true}
             />
             {errorMessage && (
                 <Text style={styles.error}>Error: {errorMessage}</Text>
